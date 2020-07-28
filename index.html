@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0,maximum-scale=1.0, user-scalable=no">
+        <script src="https://cdn.jsdelivr.net/gh/soxft/cdn@master/mdui/js/mdui.min.js"></script>
+        <title>XCHAT</title>
+    </head>
+    <body>
+      <div style='height:10px'></div>
+      <input type='text' style='width:70px' placeholder="昵称" id='name'/>
+      <div style='height:5px'></div>
+      <input type='text' placeholder="Input Your Message" id='input'/>  <span id='error'>用户名和信息不能为空</span>
+      <div style='height:5px'></div>
+      <button id='submit' onclick="Send()">发送</button>
+      <div style='height:10px'></div>
+      <pre></pre>
+      <script>
+  var $ = mdui.JQ
+ $('#error').hide(); //初始化error
+
+ function Send() {
+      $('#submit').attr('disabled',true);
+     var name = $('#name').val();
+     var input = $('#input').val();
+     if (input == '' || name == '') //用于判断用户名和信息是否输入
+     {
+         $('#error').show();
+         $('#submit').removeAttr('disabled');
+     } else {
+         time = Date.now();
+         $.ajax({
+             method: 'GET',
+             url: 'server.php',
+             timeout: 5000,  //5秒延迟
+             data: {
+                 method: 'SEND',
+                 time: time,
+                 input: input,
+                 name: name
+             },
+             success: function(data) {
+                 if (data == '200') {
+                     $('#input').val('');
+                 } else {
+                     $('pre').prepend('' + time + ' | 发送失败 |' + data + '<br/>');
+                 }
+                  $('#submit').removeAttr('disabled');
+             },
+             complete: function(xhr,textStatus)
+             {
+               if(textStatus == 'timeout')
+               {
+                 $('pre').prepend('' + time + ' | 发送超时! | <br/>');
+               }
+             }
+         });
+         $('#error').hide();
+     }
+ }
+
+ time = ''; //初始化时间
+ function getData(time) {
+     $.ajax({
+         method: 'GET',
+         url: 'server.php',
+         timeout: 50000,  //50秒延迟
+         data: {
+             method: 'GET',
+             time: time
+         },
+         success: function(res) {
+             if (res !== '') {
+                  time = Date.now(); //如果有新信息则更新时间
+                  data = eval('(' + res + ')');
+                  len = data.length;
+                  for (i = 0;i <= len-1;i++)
+                  {
+                    $('pre').prepend('' + data[i]['time'] + ' | ' + data[i]['name'] + ' -> '  + data[i]['input'] + '<br/>');
+                  }
+             }
+             getData(time);
+         },
+         error: function(res) {
+             getData(time);
+         }
+     });
+ }
+ getData(time)
+      </script>
+    </body>
+</html>
